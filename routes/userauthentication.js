@@ -1,98 +1,167 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const {UserModel } = require("../models/usermodel");
+const { UserModel } = require("../models/usermodel");
 const userRouter = express.Router();
+const authMiddleware = require("../middleware/authMiddleware");
+
+// Constants
+const ACCESS_TOKEN_EXPIRY = "1h";
+const REFRESH_TOKEN_EXPIRY = "7d";
+const JWT_SECRET = process.env.JWT_SECRET_KEY || "fallbacksecret";
+
+// Helper function to generate tokens
+const generateTokens = (user) => {
+  const accessToken = jwt.sign(
+    { 
+      userId: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role 
+    },
+    JWT_SECRET,
+    { expiresIn: ACCESS_TOKEN_EXPIRY }
+  );
+
+  const refreshToken = jwt.sign(
+    { userId: user._id },
+    JWT_SECRET,
+    { expiresIn: REFRESH_TOKEN_EXPIRY }
+  );
+
+  return { accessToken, refreshToken };
+};
 
 // Register
 userRouter.post("/register", async (req, res) => {
   try {
-      const { name, email, password } = req.body;
+    const { username, email, password } = req.body;
 
-      // check if user exists
-      const existingUser = await UserModel.findOne({ email });
+    // Validate input
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
 
-      if (existingUser) {
-          return res.status(400).json({ message: "User already exists" });
-      }
+    // Check if user exists
+    const existingUser = await UserModel.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ message: "User already exists" });
+    }
 
-      // hash password
-      const hashPassword = await bcrypt.hash(password, 10);
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-      // create new user
-      const newUser = new UserModel({
-          username: name,
-          email,
-          password: hashPassword
-      });
+    // Create new user (role will default to 'customer')
+    const newUser = new UserModel({
+      username,
+      email,
+      password: hashedPassword
+      // No need to specify role - it will default to 'customer'
+    });
 
-      await newUser.save();
+    await newUser.save();
 
-      // Generate JWT token
-      const token = jwt.sign(
-          { id: newUser._id }, 
-          process.env.JWT_SECRET || "fallbacksecret", // Add proper secret in .env
-          { expiresIn: "1h" }
-      );
+    // Generate tokens
+    const { accessToken, refreshToken } = generateTokens(newUser);
 
-      res.status(201).json({ 
-          message: "User created successfully",
-          token,
-          user: {
-              id: newUser._id,
-              username: newUser.username,
-              email: newUser.email
-          }
-      });
+    // Return response without password
+    const userResponse = {
+      id: newUser._id,
+      username: newUser.username,
+      email: newUser.email,
+      role: newUser.role // Will be 'customer'
+    };
+
+    res.status(201).json({
+      message: "User registered successfully",
+      user: userResponse,
+      accessToken,
+      refreshToken
+    });
+
   } catch (error) {
-      console.error("Registration error:", error);
-      res.status(500).json({ 
-          message: "Error registering user",
-          error: error.message 
-      });
+    console.error("Registration error:", error);
+    res.status(500).json({
+      message: "Error registering user",
+      error: error.message
+    });
   }
 });
 
-
-// login
-
+// Login
 userRouter.post("/login", async (req, res) => {
+  try {
     const { email, password } = req.body;
-    try {
-      const user = await UserModel.findOne({ email });
-      if (user) {
-        bcrypt.compare(password, user.password, (err, result) => {
-  
-          const token = jwt.sign(
-            { userId: user._id, user: user.name, role: user.role },
-            "secretkey",
-            {
-              expiresIn: "7d",
-            }
-          );
-          const rToken = jwt.sign(
-            { userId: user._id, user: user.name },
-            "secretkey",
-            {
-              expiresIn: "24d",
-            }
-          );
-          if (result) {
-            res
-              .status(202)
-              .json({ msg: "User LogIn Success", token, rToken, user });
-          } else {
-            res.status(401).json({ msg: "invalid credentials" });
-          }
-        });
-      } else {
-        res.status(404).json({ msg: "user does not exit. Signup first!!" });
-      }
-    } catch (error) {
-      res.status(400).json({ err: error.message });
+
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Email and password are required" 
+      });
     }
-  });
-  
-  module.exports = {
-    userRouter,
-  };
+
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ 
+        success: false,
+        message: "User with this email doesn't exist" 
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ 
+        success: false,
+        message: "Incorrect password" 
+      });
+    }
+
+    const { accessToken, refreshToken } = generateTokens(user);
+
+    const userResponse = {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role
+    };
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      user: userResponse,
+      accessToken,
+      refreshToken
+    });
+
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error during login",
+      error: error.message
+    });
+  }
+});
+
+// Profile routes 
+userRouter.get("/profile", authMiddleware, async (req, res) => {
+  res.json(req.user);
+});
+
+userRouter.put("/profile", authMiddleware, async (req, res) => {
+  try {
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      req.user._id,
+      req.body,
+      { new: true }
+    ).select('-password');
+    
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ message: "Error updating profile", error });
+  }
+});
+
+module.exports = {
+  userRouter,
+};

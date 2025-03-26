@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const { userRouter} = require("./routes/userauthentication");
 
 dotenv.config();
+console.log("JWT_SECRET_KEY:", process.env.JWT_SECRET_KEY); 
 
 const app = express();
 app.use(cors());
