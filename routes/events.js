@@ -60,14 +60,49 @@ eventRouter.post('/', upload.single('image'), async (req, res) => {
     }
 });
 
+
+
+// get upcoming events
+eventRouter.get('/upcoming', async (req, res) => {
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const events = await Event.find({
+            date: { $gte: today.toISOString().split('T')[0]}
+        }).sort({ date: 1});
+
+        res.status(200).json(events);
+    }  catch (error){
+        console.error("Error fetching upcoming events: ", error);
+        res.status(500).json({ error: "Failed to fetch upcoming events"});
+    }
+});
+
+// get past events
+eventRouter.get('/past', async(req, res) => {
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const events = await Event.find({
+            date: { $lt: today.toISOString().split('T')[0]}
+        }).sort({ date: -1});
+        
+        res.status(200).json(events);
+    }   catch (error){
+        console.error("Error fetching past events", error);
+        res.status(500).json({ error: "Failed to fetch past events"});
+    };
+})
+
+
 // get all events
 eventRouter.get('/', async (req, res) => {
     try{
         const events = await Event.find();
         res.status(200).json(events);
 
-        // In your GET route
-        console.log(events[0]?.image); // Check the structure of the first event's image
     }   catch (error) {
         console.error("Error fetching events: ", error);
         res.status(500).json({error: "Failed to fetch events"})
