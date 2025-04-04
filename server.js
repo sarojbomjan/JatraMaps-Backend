@@ -14,7 +14,9 @@ app.use(cors());
 app.use(express.json());
 
 // mount user routes
-app.use("/users", userRouter);
+app.use("/", userRouter);
+app.use("/comments", commentRouter)
+app.use("/moderation", userRouterMod)
 app.use("/events", eventRouter);
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
