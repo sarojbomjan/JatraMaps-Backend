@@ -2,8 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const { userRouter } = require("./routes/userauthentication");
-const { eventRouter } = require("./routes/events");
+const { userRouter } = require("./routes/userRoutes");
+const { eventRouter } = require("./routes/eventsRoutes");
 
 dotenv.config();
 console.log("JWT_SECRET_KEY:", process.env.JWT_SECRET_KEY); 

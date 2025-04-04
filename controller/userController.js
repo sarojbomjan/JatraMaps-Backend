@@ -1,12 +1,9 @@
-const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { UserModel } = require("../models/usermodel");
-const userRouter = express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
 
 // Constants
-const ACCESS_TOKEN_EXPIRY = "1h";
+const ACCESS_TOKEN_EXPIRY = "24h";
 const REFRESH_TOKEN_EXPIRY = "7d";
 const JWT_SECRET = process.env.JWT_SECRET_KEY || "fallbacksecret";
 
@@ -32,8 +29,7 @@ const generateTokens = (user) => {
   return { accessToken, refreshToken };
 };
 
-// Register
-userRouter.post("/register", async (req, res) => {
+const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
@@ -51,12 +47,11 @@ userRouter.post("/register", async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user (role will default to 'customer')
+    // Create new user 
     const newUser = new UserModel({
       username,
       email,
       password: hashedPassword
-      // No need to specify role - it will default to 'customer'
     });
 
     await newUser.save();
@@ -69,7 +64,7 @@ userRouter.post("/register", async (req, res) => {
       id: newUser._id,
       username: newUser.username,
       email: newUser.email,
-      role: newUser.role // Will be 'customer'
+      role: newUser.role 
     };
 
     res.status(201).json({
@@ -86,10 +81,9 @@ userRouter.post("/register", async (req, res) => {
       error: error.message
     });
   }
-});
+};
 
-// Login
-userRouter.post("/login", async (req, res) => {
+const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -119,7 +113,7 @@ userRouter.post("/login", async (req, res) => {
     const { accessToken, refreshToken } = generateTokens(user);
 
     const userResponse = {
-      id: user._id,
+      id: user.userId,
       username: user.username,
       email: user.email,
       role: user.role
@@ -141,14 +135,13 @@ userRouter.post("/login", async (req, res) => {
       error: error.message
     });
   }
-});
+};
 
-// Profile routes 
-userRouter.get("/profile", authMiddleware, async (req, res) => {
+const getProfile = async (req, res) => {
   res.json(req.user);
-});
+};
 
-userRouter.put("/profile", authMiddleware, async (req, res) => {
+const updateProfile = async (req, res) => {
   try {
     const updatedUser = await UserModel.findByIdAndUpdate(
       req.user._id,
@@ -160,8 +153,11 @@ userRouter.put("/profile", authMiddleware, async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Error updating profile", error });
   }
-});
+};
 
 module.exports = {
-  userRouter,
+  register,
+  login,
+  getProfile,
+  updateProfile
 };

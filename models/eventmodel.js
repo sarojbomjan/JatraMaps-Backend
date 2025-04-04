@@ -1,5 +1,21 @@
 const mongoose = require('mongoose');
 
+const commentSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user', 
+    required: true
+  },
+  text: {
+    type: String,
+    required: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
 const eventSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
@@ -8,17 +24,25 @@ const eventSchema = new mongoose.Schema({
   location: { type: String, required: true },
   category: { type: String, required: true },
   image: { 
-    path: { type: String },       // e.g. "assets/events/filename.jpg"
-    url: { type: String }         // e.g. "http://yourdomain.com/assets/events/filename.jpg"
+    path: { type: String },      
+    url: { type: String }        
   },
   organizer: { type: String, required: true },
   price: { type: String, default: 'Free' },
   status: { type: String, default: 'draft' },
   attendees: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now }
+  comments: [commentSchema]
 }, {
-  toJSON: { virtuals: true },     // Ensure virtuals are included when converted to JSON
-  toObject: { virtuals: true }    // Include virtuals when converting to objects
+  timestamps: true, // This will add createdAt and updatedAt to the main event
+  toJSON: { virtuals: true },     
+  toObject: { virtuals: true }    
+});
+
+// Add virtual population for comments' user data
+eventSchema.virtual('populatedComments', {
+  ref: 'Comment',
+  localField: 'comments._id',
+  foreignField: '_id'
 });
 
 module.exports = mongoose.model('Event', eventSchema);
