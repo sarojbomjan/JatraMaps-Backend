@@ -16,7 +16,7 @@ exports.addComment = async (req, res) => {
         id,
         { $push: { comments: { user: userId, text } } },
         { new: true }
-      ).populate('comments.user', 'name avatar'); // Populate user details
+      ).populate('comments.user', 'name avatar'); 
   
       if (!event) return res.status(404).json({ message: 'Event not found' });
   
@@ -35,7 +35,7 @@ exports.addComment = async (req, res) => {
   
       const event = await Event.findById(id)
         .select('comments')
-        .populate('comments.user', 'name avatar');
+        .populate('comments.user', 'username');
   
       if (!event) {
         return res.status(404).json({ message: 'Event not found' });
