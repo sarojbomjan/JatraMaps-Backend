@@ -45,4 +45,5 @@ eventRouter.delete('/:id', deleteEvent);
 eventRouter.post('/:id/comments', auth, commentController.addComment);
 eventRouter.get('/:id/comments', auth, commentController.getComments);
 
+
 module.exports = { eventRouter };

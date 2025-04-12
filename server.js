@@ -4,7 +4,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const { userRouter } = require("./routes/userRoutes");
 const { eventRouter } = require("./routes/eventsRoutes");
-const commentRouter = require("./routes/commentRoutes")
+// const commentRouter = require("./routes/commentRoutes")
 
 dotenv.config();
 console.log("JWT_SECRET_KEY:", process.env.JWT_SECRET_KEY); 
@@ -16,7 +16,7 @@ app.use(express.json());
 
 // mount user routes
 app.use("/", userRouter);
-app.use("/comments", commentRouter)
+// app.use("/comments", commentRouter)
 // app.use("/moderation", userRouterMod)
 app.use("/events", eventRouter);
 app.use('/assets', express.static(path.join(__dirname, 'assets')));

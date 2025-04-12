@@ -8,8 +8,8 @@ const userSchema = mongoose.Schema(
       isBanned: { type: Boolean, default: false },
         role: { 
             type: String, 
-            enum: ['customer', 'admin', 'moderator'], // Allowed roles
-            default: 'customer'        // Default role
+            enum: ['customer', 'admin', 'moderator'],
+            default: 'customer'       
         }
     },
     {
