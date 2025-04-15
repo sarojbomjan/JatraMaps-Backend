@@ -6,4 +6,4 @@ router.get("/moderation", modcommentController.getAllCommentsForModeration);
 router.put("/status/:id", modcommentController.updateCommentStatus);
 router.put("/:id/edit", modcommentController.editCommentText);
   
-  module.exports = router;
+//   module.exports = router;

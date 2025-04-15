@@ -3,52 +3,52 @@ const Event = require("../models/eventmodel");
 const User = require("../models/usermodel");
 
 exports.addComment = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { text } = req.body;
-      const userId = req.user._id;
-  
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ message: 'Invalid event ID' });
-      }
-  
-      const event = await Event.findByIdAndUpdate(
-        id,
-        { $push: { comments: { user: userId, text } } },
-        { new: true }
-      ).populate('comments.user', 'name avatar'); // Populate user details
-  
-      if (!event) return res.status(404).json({ message: 'Event not found' });
-  
-      // Return just the newly added comment
-      const newComment = event.comments[event.comments.length - 1];
-      return res.status(201).json(newComment);
-  
-    } catch (error) {
-      res.status(500).json({ message: 'Failed to add comment', error: error.message });
+  try {
+    const { id } = req.params;
+    const { text } = req.body;
+    const userId = req.user._id;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid event ID" });
     }
-  };
-  
-  exports.getComments = async (req, res) => {
-    try {
-      const { id } = req.params;
-  
-      const event = await Event.findById(id)
-        .select('comments')
-        .populate('comments.user', 'name avatar');
-  
-      if (!event) {
-        return res.status(404).json({ message: 'Event not found' });
-      }
-  
-      return res.status(200).json({
-        comments: event.comments || []
-      });
-  
-    } catch (error) {
-      return res.status(500).json({ 
-        message: 'Failed to fetch comments', 
-        error: error.message 
-      });
+
+    const event = await Event.findByIdAndUpdate(
+      id,
+      { $push: { comments: { user: userId, text } } },
+      { new: true }
+    ).populate("comments.user", "name avatar");
+
+    if (!event) return res.status(404).json({ message: "Event not found" });
+
+    // Return just the newly added comment
+    const newComment = event.comments[event.comments.length - 1];
+    return res.status(201).json(newComment);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Failed to add comment", error: error.message });
+  }
+};
+
+exports.getComments = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const event = await Event.findById(id)
+      .select("comments")
+      .populate("comments.user", "username");
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
     }
-  };
+
+    return res.status(200).json({
+      comments: event.comments || [],
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to fetch comments",
+      error: error.message,
+    });
+  }
+};

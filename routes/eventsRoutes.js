@@ -2,8 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const eventRouter = express.Router();
 const multer = require("multer");
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 const auth = require("../middleware/authMiddleware");
 const commentController = require("../controller/commentController");
 const {
@@ -14,11 +14,11 @@ const {
   getEventById,
   updateEvent,
   deleteEvent,
-  verifyEvent
+  verifyEvent,
 } = require("../controller/eventController");
 
 // Multer configuration
-const assetsDir = path.join(__dirname, '../assets/events');
+const assetsDir = path.join(__dirname, "../assets/events");
 if (!fs.existsSync(assetsDir)) {
   fs.mkdirSync(assetsDir, { recursive: true });
 }
@@ -26,23 +26,23 @@ if (!fs.existsSync(assetsDir)) {
 const storage = multer.diskStorage({
   destination: assetsDir,
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, `${uniqueSuffix}-${file.originalname}`);
-  }
+  },
 });
 const upload = multer({ storage });
 
 // Event routes
-eventRouter.post('/', upload.single('image'), createEvent);
-eventRouter.get('/upcoming', getUpcomingEvents);
-eventRouter.get('/past', getPastEvents);
-eventRouter.get('/', getAllEvents);
-eventRouter.get('/:id', getEventById);
-eventRouter.put('/:id', upload.single('image'), updateEvent);
-eventRouter.delete('/:id', deleteEvent);
+eventRouter.post("/", upload.single("image"), createEvent);
+eventRouter.get("/upcoming", getUpcomingEvents);
+eventRouter.get("/past", getPastEvents);
+eventRouter.get("/", getAllEvents);
+eventRouter.get("/:id", getEventById);
+eventRouter.put("/:id", upload.single("image"), updateEvent);
+eventRouter.delete("/:id", deleteEvent);
 
 // Comment routes
-eventRouter.post('/:id/comments', auth, commentController.addComment);
-eventRouter.get('/:id/comments', auth, commentController.getComments);
+eventRouter.post("/:id/comments", auth, commentController.addComment);
+eventRouter.get("/:id/comments", auth, commentController.getComments);
 
 module.exports = { eventRouter };
