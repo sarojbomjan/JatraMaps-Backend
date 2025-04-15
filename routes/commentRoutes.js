@@ -1,16 +1,9 @@
 const express = require("express")
 const router = express.Router()
+const modcommentController = require("../controller/modcommentController")
 
-const {
-    getComments,
-    approveComment,
-    editComment,
-    deleteComment,
-  } = require("../controllers/commentController");
-  
-  router.get("/", getComments);
-  router.put("/:id/approve", approveComment);
-  router.put("/:id/edit", editComment);
-  router.delete("/:id/delete", deleteComment);
+router.get("/moderation", modcommentController.getAllCommentsForModeration);
+router.put("/status/:id", modcommentController.updateCommentStatus);
+router.put("/:id/edit", modcommentController.editCommentText);
   
   module.exports = router;
