@@ -10,21 +10,19 @@ const JWT_SECRET = process.env.JWT_SECRET_KEY || "fallbacksecret";
 // Helper function to generate tokens
 const generateTokens = (user) => {
   const accessToken = jwt.sign(
-    { 
+    {
       userId: user._id,
       username: user.username,
       email: user.email,
-      role: user.role 
+      role: user.role,
     },
     JWT_SECRET,
     { expiresIn: ACCESS_TOKEN_EXPIRY }
   );
 
-  const refreshToken = jwt.sign(
-    { userId: user._id },
-    JWT_SECRET,
-    { expiresIn: REFRESH_TOKEN_EXPIRY }
-  );
+  const refreshToken = jwt.sign({ userId: user._id }, JWT_SECRET, {
+    expiresIn: REFRESH_TOKEN_EXPIRY,
+  });
 
   return { accessToken, refreshToken };
 };
@@ -47,11 +45,11 @@ const register = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user 
+    // Create new user
     const newUser = new UserModel({
       username,
       email,
-      password: hashedPassword
+      password: hashedPassword,
     });
 
     await newUser.save();
@@ -64,21 +62,20 @@ const register = async (req, res) => {
       id: newUser._id,
       username: newUser.username,
       email: newUser.email,
-      role: newUser.role 
+      role: newUser.role,
     };
 
     res.status(201).json({
       message: "User registered successfully",
       user: userResponse,
       accessToken,
-      refreshToken
+      refreshToken,
     });
-
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({
       message: "Error registering user",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -88,25 +85,25 @@ const login = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: "Email and password are required" 
+        message: "Email and password are required",
       });
     }
 
     const user = await UserModel.findOne({ email });
     if (!user) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: "User with this email doesn't exist" 
+        message: "User with this email doesn't exist",
       });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: "Incorrect password" 
+        message: "Incorrect password",
       });
     }
 
@@ -116,7 +113,7 @@ const login = async (req, res) => {
       id: user.userId,
       username: user.username,
       email: user.email,
-      role: user.role
+      role: user.role,
     };
 
     res.status(200).json({
@@ -124,15 +121,14 @@ const login = async (req, res) => {
       message: "Login successful",
       user: userResponse,
       accessToken,
-      refreshToken
+      refreshToken,
     });
-
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error during login",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -147,8 +143,8 @@ const updateProfile = async (req, res) => {
       req.user._id,
       req.body,
       { new: true }
-    ).select('-password');
-    
+    ).select("-password");
+
     res.json(updatedUser);
   } catch (error) {
     res.status(500).json({ message: "Error updating profile", error });
@@ -158,26 +154,25 @@ const updateProfile = async (req, res) => {
 // get all users
 const getAllUsers = async (req, res) => {
   try {
-    const users = await UserModel.find().select('-password');
+    const users = await UserModel.find().select("-password");
 
     if (users.length === 0) {
-      return res.status(404).json({ message : "No Users Found"});
+      return res.status(404).json({ message: "No Users Found" });
     }
-
 
     res.status(200).json({
       success: true,
-      users
+      users,
     });
   } catch (error) {
     console.error("Error retrieving users:", error);
     res.status(500).json({
       success: false,
       message: "Error retrieving users",
-      error: error.message
+      error: error.message,
     });
   }
-}
+};
 
 // Ban user
 const banUser = async (req, res) => {
@@ -190,14 +185,14 @@ const banUser = async (req, res) => {
 };
 
 //UnBan user
-const unbanUser =  async(req,res) =>{
-  try{
-      await User.findByIdAndUpdate(req.params.userId, {isBanned: false})
-      res.json({message: `User ${req.params.userId} has been unbanned`})
-  } catch(error){
-      res.status(500).json({message: "Error unbanning user"})
+const unbanUser = async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.params.userId, { isBanned: false });
+    res.json({ message: `User ${req.params.userId} has been unbanned` });
+  } catch (error) {
+    res.status(500).json({ message: "Error unbanning user" });
   }
-}
+};
 
 module.exports = {
   register,
@@ -206,5 +201,5 @@ module.exports = {
   updateProfile,
   getAllUsers,
   banUser,
-  unbanUser
+  unbanUser,
 };
