@@ -6,6 +6,7 @@ const { UserModel } = require("../models/usermodel");
 const ACCESS_TOKEN_EXPIRY = "24h";
 const REFRESH_TOKEN_EXPIRY = "7d";
 const JWT_SECRET = process.env.JWT_SECRET_KEY || "fallbacksecret";
+const authentication = require("../middleware/authMiddleware");
 
 // Helper function to generate tokens
 const generateTokens = (user) => {
@@ -194,6 +195,27 @@ const unbanUser = async (req, res) => {
   }
 };
 
+// change password
+const changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    const user = await UserModel.findById(req.user.id);
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch)
+      return res.status(400).json({ message: "Current password is incorrect" });
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.json({ message: "Password changed successfully" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -202,4 +224,5 @@ module.exports = {
   getAllUsers,
   banUser,
   unbanUser,
+  changePassword,
 };

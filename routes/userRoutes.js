@@ -9,6 +9,7 @@ const {
   getAllUsers,
   banUser,
   unbanUser,
+  changePassword,
 } = require("../controller/userController");
 
 // Routes
@@ -19,6 +20,7 @@ userRouter.put("/profile", authMiddleware, updateProfile);
 userRouter.get("/users", getAllUsers);
 userRouter.get("/banUser", banUser);
 userRouter.get("/unbanUser", unbanUser);
+userRouter.put("/changePassword", authMiddleware, changePassword);
 
 module.exports = {
   userRouter,
