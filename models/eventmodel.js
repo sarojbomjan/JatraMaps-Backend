@@ -14,10 +14,6 @@ const commentSchema = new mongoose.Schema({
     type: String,
     default: 'Pending' 
   },
-  status: {
-    type: String,
-    default: 'Pending' 
-  },
   createdAt: {
     type: Date,
     default: Date.now,
