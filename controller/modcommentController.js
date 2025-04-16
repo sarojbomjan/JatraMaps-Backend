@@ -13,7 +13,7 @@ exports.getAllCommentsForModeration = async (req, res) => {
 
     const allComments = events.flatMap((event) =>
       event.comments.map((comment) => ({
-        _id: comment._id,
+        _commentid: comment._id,
         user: comment.user?.username || "Unknown User",
         text: comment.text,
         status: comment.status || "Pending",
