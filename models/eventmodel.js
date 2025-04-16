@@ -12,7 +12,7 @@ const commentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    default: 'Pending' 
+    default: "Pending",
   },
   createdAt: {
     type: Date,

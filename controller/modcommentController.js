@@ -5,20 +5,20 @@ exports.getAllCommentsForModeration = async (req, res) => {
   try {
     const events = await Event.find()
       .select("title comments")
-      .populate("comments.user", "name avatar");
+      .populate("comments.user", "username avatar");
 
     if (!events || events.length === 0) {
       return res.status(404).json({ message: "No events or comments found." });
     }
 
-    const allComments = events.flatMap(event =>
-      event.comments.map(comment => ({
+    const allComments = events.flatMap((event) =>
+      event.comments.map((comment) => ({
         _id: comment._id,
-        user: comment.user?.name || "Unknown User", // handles deleted users
+        user: comment.user?.username || "Unknown User",
         text: comment.text,
         status: comment.status || "Pending",
         eventTitle: event.title || "Untitled Event",
-        eventId: event._id
+        eventId: event._id,
       }))
     );
 
@@ -26,7 +26,7 @@ exports.getAllCommentsForModeration = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "Error fetching comments",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -80,14 +80,13 @@ exports.editCommentText = async (req, res) => {
     }
 
     comment.text = text; // ✅ Update comment text
-    await event.save();  // ✅ Save to DB
+    await event.save(); // ✅ Save to DB
 
     res.status(200).json({ message: "Comment text updated successfully" });
   } catch (error) {
     res.status(500).json({
       message: "Failed to update comment text",
-      error: error.message
+      error: error.message,
     });
   }
 };
-

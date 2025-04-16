@@ -4,6 +4,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const { userRouter } = require("./routes/userRoutes");
 const { eventRouter } = require("./routes/eventsRoutes");
+const moderatorRouter = require("./routes/commentRoutes");
 
 dotenv.config();
 console.log("JWT_SECRET_KEY:", process.env.JWT_SECRET_KEY);
@@ -16,6 +17,7 @@ app.use(express.json());
 // mount user routes
 app.use("/", userRouter);
 app.use("/events", eventRouter);
+app.use("/moderator", moderatorRouter);
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 
 // Test route
