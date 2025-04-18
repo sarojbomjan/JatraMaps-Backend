@@ -17,6 +17,7 @@ app.use(express.json());
 // mount user routes
 app.use("/", userRouter);
 app.use("/events", eventRouter);
+app.use("/moderator", moderatorRouter);
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.use("/comments",commentRouter);
 

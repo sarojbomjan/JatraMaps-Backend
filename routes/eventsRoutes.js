@@ -14,7 +14,7 @@ const {
   getEventById,
   updateEvent,
   deleteEvent,
-  verifyEvent,
+  approveEvent,
 } = require("../controller/eventController");
 
 // Multer configuration
@@ -40,6 +40,7 @@ eventRouter.get("/", getAllEvents);
 eventRouter.get("/:id", getEventById);
 eventRouter.put("/:id", upload.single("image"), updateEvent);
 eventRouter.delete("/:id", deleteEvent);
+eventRouter.patch("/:id/approve", approveEvent);
 
 // Comment routes
 eventRouter.post("/:id/comments", auth, commentController.addComment);
