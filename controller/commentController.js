@@ -1,12 +1,17 @@
 const mongoose = require("mongoose");
 const Event = require("../models/eventmodel");
-const User = require("../models/usermodel");
+const {UserModel} = require("../models/usermodel");
 
 exports.addComment = async (req, res) => {
   try {
     const { id } = req.params;
     const { text } = req.body;
     const userId = req.user._id;
+
+    const user = await UserModel.findById(userId);
+    if (user.isBanned) {
+      return res.status(403).json({ message: "You are banned from commenting." });
+    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid event ID" });

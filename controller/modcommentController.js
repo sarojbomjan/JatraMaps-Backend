@@ -1,4 +1,7 @@
 const Event = require("../models/eventmodel");
+const {UserModel} = require("../models/usermodel");
+const Comment = require("../models/commentmodel");
+const { default: mongoose } = require("mongoose");
 
 // GET /comments/moderation
 exports.getAllCommentsForModeration = async (req, res) => {
@@ -14,7 +17,8 @@ exports.getAllCommentsForModeration = async (req, res) => {
     const allComments = events.flatMap(event =>
       event.comments.map(comment => ({
         _id: comment._id,
-        user: comment.user?.name || "Unknown User", // handles deleted users
+        user: comment.user?.name || "Unknown User",
+        userId: comment.user?._id.toString() || "Unknown UserId",
         text: comment.text,
         status: comment.status || "Pending",
         eventTitle: event.title || "Untitled Event",
@@ -91,3 +95,74 @@ exports.editCommentText = async (req, res) => {
   }
 };
 
+exports.deleteComment = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const event = await Event.findOne({ "comments._id": id });
+    if (!event) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    event.comments = event.comments.filter(comment => comment._id.toString() !== id);
+    await event.save();
+
+    res.status(200).json({ message: "Comment deleted successfully" });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to delete comment",
+      error: error.message,
+    });
+  }
+};
+
+exports.banUser = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await UserModel.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.isBanned = true;
+    await user.save();
+
+    // Now also update all comments in events by this user
+    await Event.updateMany(
+      { "comments.user": userId },
+      { $set: { "comments.$[elem].status": "Banned" } },
+      { arrayFilters: [{ "elem.user": userId }] }
+    );
+
+    res.status(200).json({ message: "User banned and comments updated" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to ban user", error: error.message });
+  }
+};
+
+exports.unbanUser = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await UserModel.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Toggle the ban status
+    user.isBanned = !user.isBanned;
+    await user.save();
+
+    // Update all comments by the user accordingly
+    const newStatus = user.isBanned ? "Banned" : "Pending";
+
+    await Event.updateMany(
+      { "comments.user": userId },
+      { $set: { "comments.$[elem].status": newStatus } },
+      { arrayFilters: [{ "elem.user": userId }] }
+    );
+
+    res.status(200).json({
+      message: user.isBanned ? "User banned and comments updated" : "User unbanned and comments updated",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to toggle ban", error: error.message });
+  }
+};
