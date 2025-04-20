@@ -1,6 +1,5 @@
 const Event = require("../models/eventmodel");
-const {UserModel} = require("../models/usermodel");
-const Comment = require("../models/commentmodel");
+const { UserModel } = require("../models/usermodel");
 const { default: mongoose } = require("mongoose");
 
 // GET /comments/moderation
@@ -103,7 +102,9 @@ exports.deleteComment = async (req, res) => {
       return res.status(404).json({ message: "Comment not found" });
     }
 
-    event.comments = event.comments.filter(comment => comment._id.toString() !== id);
+    event.comments = event.comments.filter(
+      (comment) => comment._id.toString() !== id
+    );
     await event.save();
 
     res.status(200).json({ message: "Comment deleted successfully" });
@@ -134,7 +135,9 @@ exports.banUser = async (req, res) => {
 
     res.status(200).json({ message: "User banned and comments updated" });
   } catch (error) {
-    res.status(500).json({ message: "Failed to ban user", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to ban user", error: error.message });
   }
 };
 
@@ -159,9 +162,13 @@ exports.unbanUser = async (req, res) => {
     );
 
     res.status(200).json({
-      message: user.isBanned ? "User banned and comments updated" : "User unbanned and comments updated",
+      message: user.isBanned
+        ? "User banned and comments updated"
+        : "User unbanned and comments updated",
     });
   } catch (error) {
-    res.status(500).json({ message: "Failed to toggle ban", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to toggle ban", error: error.message });
   }
 };
