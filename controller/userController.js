@@ -6,7 +6,6 @@ const { UserModel } = require("../models/usermodel");
 const ACCESS_TOKEN_EXPIRY = "24h";
 const REFRESH_TOKEN_EXPIRY = "7d";
 const JWT_SECRET = process.env.JWT_SECRET_KEY || "fallbacksecret";
-const authentication = require("../middleware/authMiddleware");
 
 // Helper function to generate tokens
 const generateTokens = (user) => {

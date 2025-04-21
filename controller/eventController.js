@@ -142,7 +142,6 @@ const updateEvent = async (req, res) => {
       event.image = req.file.path;
     }
 
-    // Update other fields
     event.title = title || event.title;
     event.description = description || event.description;
     event.date = date || event.date;

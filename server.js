@@ -7,7 +7,6 @@ const { eventRouter } = require("./routes/eventsRoutes");
 const { commentRouter } = require("./routes/commentRoutes");
 
 dotenv.config();
-console.log("JWT_SECRET_KEY:", process.env.JWT_SECRET_KEY);
 const path = require("path");
 const app = express();
 

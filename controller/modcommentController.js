@@ -17,6 +17,7 @@ exports.getAllCommentsForModeration = async (req, res) => {
       event.comments.map((comment) => ({
         _commentid: comment._id,
         user: comment.user?.username || "Unknown User",
+        userId: comment.user?._id || null,
         text: comment.text,
         status: comment.status || "Pending",
         eventTitle: event.title || "Untitled Event",
@@ -52,8 +53,6 @@ exports.updateCommentStatus = async (req, res) => {
 
     // Update the status
     comment.status = status;
-
-    // Save the parent event document
     await event.save();
 
     res.status(200).json({ message: `Comment status updated to ${status}` });
@@ -81,8 +80,8 @@ exports.editCommentText = async (req, res) => {
       return res.status(404).json({ message: "Comment not found in event" });
     }
 
-    comment.text = text; // ✅ Update comment text
-    await event.save(); // ✅ Save to DB
+    comment.text = text;
+    await event.save();
 
     res.status(200).json({ message: "Comment text updated successfully" });
   } catch (error) {
@@ -126,7 +125,6 @@ exports.banUser = async (req, res) => {
     user.isBanned = true;
     await user.save();
 
-    // Now also update all comments in events by this user
     await Event.updateMany(
       { "comments.user": userId },
       { $set: { "comments.$[elem].status": "Banned" } },
@@ -148,11 +146,9 @@ exports.unbanUser = async (req, res) => {
     const user = await UserModel.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Toggle the ban status
     user.isBanned = !user.isBanned;
     await user.save();
 
-    // Update all comments by the user accordingly
     const newStatus = user.isBanned ? "Banned" : "Pending";
 
     await Event.updateMany(

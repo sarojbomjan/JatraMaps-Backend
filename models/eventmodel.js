@@ -1,6 +1,11 @@
 const mongoose = require("mongoose");
 
 const commentSchema = new mongoose.Schema({
+  _id: {
+    type: mongoose.Schema.Types.ObjectId,
+    default: () => new mongoose.Types.ObjectId(),
+    required: true,
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "user",
@@ -40,13 +45,12 @@ const eventSchema = new mongoose.Schema(
     comments: [commentSchema],
   },
   {
-    timestamps: true, // This will add createdAt and updatedAt to the main event
+    timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }
 );
 
-// Add virtual population for comments' user data
 eventSchema.virtual("populatedComments", {
   ref: "Comment",
   localField: "comments._id",
