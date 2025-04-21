@@ -1,5 +1,4 @@
 const express = require("express");
-const mongoose = require("mongoose");
 const eventRouter = express.Router();
 const multer = require("multer");
 const fs = require("fs");
