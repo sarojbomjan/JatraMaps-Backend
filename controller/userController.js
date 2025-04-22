@@ -2,7 +2,10 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { UserModel } = require("../models/usermodel");
 const crypto = require("crypto");
-const { sendVerificationEmail } = require("../services/emailService");
+const {
+  sendVerificationEmail,
+  verifyEmailWithService,
+} = require("../services/emailService");
 
 // Constants
 const ACCESS_TOKEN_EXPIRY = "24h";
@@ -41,19 +44,48 @@ const register = async (req, res) => {
       });
     }
 
-    // Check existing user
-    if (await UserModel.findOne({ email })) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid email address",
+      });
+    }
+
+    // Check if email already exists
+    const existingUser = await UserModel.findOne({ email });
+    if (existingUser) {
       return res.status(409).json({
         success: false,
         message: "Email already in use",
       });
     }
 
-    // Create user
+    // Verify email
+    const isEmailValid = await verifyEmailWithService(email);
+    if (!isEmailValid) {
+      return res.status(400).json({
+        success: false,
+        message: "Please use a valid email address",
+      });
+    }
+
+    // Generate verification code
     const verificationCode = Math.floor(
       100000 + Math.random() * 900000
     ).toString();
 
+    try {
+      await sendVerificationEmail(email, verificationCode);
+    } catch (emailError) {
+      console.error("Failed to send verification email:", emailError);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send verification email",
+      });
+    }
+
+    // create the user
     const user = await UserModel.create({
       username,
       email,
@@ -61,9 +93,6 @@ const register = async (req, res) => {
       verificationCode,
       verificationCodeExpires: Date.now() + 30 * 60 * 1000, // 30 mins
     });
-
-    // Send verification email
-    await sendVerificationEmail(user.email, verificationCode);
 
     res.status(201).json({
       success: true,

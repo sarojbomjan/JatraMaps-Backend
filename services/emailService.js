@@ -1,5 +1,6 @@
 const nodemailer = require("nodemailer");
 require("dotenv").config();
+const axios = require("axios");
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -9,18 +10,33 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+exports.verifyEmailWithService = async (email) => {
+  try {
+    const response = await axios.get(
+      `https://api.zerobounce.net/v2/validate?api_key=${process.env.ZEROBOUNCE_API_KEY}&email=${email}`
+    );
+
+    return response.data.status === "valid";
+  } catch (error) {
+    console.error(
+      "Email verification failed:",
+      error.response?.data || error.message
+    );
+    return false;
+  }
+};
+
 exports.sendVerificationEmail = async (email, verificationToken) => {
-  const verificationUrl = `http://localhost:5000/verify-email/${verificationToken}`;
+  const verificationCode = verificationToken;
 
   const mailOptions = {
-    from: '"Your App Name" <noreply@yourapp.com>',
+    from: '"JatraMaps" <noreply@jatramaps.com>',
     to: email,
     subject: "Verify Your Email Address",
     html: `
-       
-        <a href="${verificationUrl}">${verificationUrl}</a>
-        <p>This link will expire in 24 hours.</p>
-      `,
+      <p>Your verification code is: <strong>${verificationCode}</strong></p>
+      <p>This code will expire in 24 hours.</p>
+    `,
   };
 
   await transporter.sendMail(mailOptions);
