@@ -1,6 +1,8 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { UserModel } = require("../models/usermodel");
+const crypto = require("crypto");
+const { sendVerificationEmail } = require("../services/emailService");
 
 // Constants
 const ACCESS_TOKEN_EXPIRY = "24h";
@@ -27,54 +29,52 @@ const generateTokens = (user) => {
   return { accessToken, refreshToken };
 };
 
+// POST /register
 const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Validate input
     if (!username || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
     }
 
-    // Check if user exists
-    const existingUser = await UserModel.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({ message: "User already exists" });
+    // Check existing user
+    if (await UserModel.findOne({ email })) {
+      return res.status(409).json({
+        success: false,
+        message: "Email already in use",
+      });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Create user
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
 
-    // Create new user
-    const newUser = new UserModel({
+    const user = await UserModel.create({
       username,
       email,
-      password: hashedPassword,
+      password: await bcrypt.hash(password, 12),
+      verificationCode,
+      verificationCodeExpires: Date.now() + 30 * 60 * 1000, // 30 mins
     });
 
-    await newUser.save();
-
-    // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(newUser);
-
-    // Return response without password
-    const userResponse = {
-      id: newUser._id,
-      username: newUser.username,
-      email: newUser.email,
-      role: newUser.role,
-    };
+    // Send verification email
+    await sendVerificationEmail(user.email, verificationCode);
 
     res.status(201).json({
-      message: "User registered successfully",
-      user: userResponse,
-      accessToken,
-      refreshToken,
+      success: true,
+      message:
+        "Registration successful. Please check your email for verification code.",
     });
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({
-      message: "Error registering user",
+      success: false,
+      message: "Registration failed",
       error: error.message,
     });
   }
@@ -91,7 +91,7 @@ const login = async (req, res) => {
       });
     }
 
-    const user = await UserModel.findOne({ email });
+    const user = await UserModel.findOne({ email }).select("+password");
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -99,19 +99,37 @@ const login = async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({
+    // Check if banned
+    if (user.isBanned) {
+      return res.status(403).json({
         success: false,
-        message: "Incorrect password",
+        message: "This account has been banned",
       });
     }
 
+    // Check password
+    if (!(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
+    // Check verification
+    if (!user.isVerified) {
+      return res.status(403).json({
+        success: false,
+        message: "Please verify your email first",
+      });
+    }
+
+    // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user);
 
-    const userResponse = {
-      id: user.userId,
-      username: user.username,
+    // Return responsee
+    const userData = {
+      id: user._id,
+      fullName: user.fullName,
       email: user.email,
       role: user.role,
     };
@@ -119,7 +137,7 @@ const login = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Login successful",
-      user: userResponse,
+      user: userData,
       accessToken,
       refreshToken,
     });
@@ -127,7 +145,7 @@ const login = async (req, res) => {
     console.error("Login error:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error during login",
+      message: "Login failed",
       error: error.message,
     });
   }
@@ -216,6 +234,7 @@ const changePassword = async (req, res) => {
 };
 
 module.exports = {
+  generateTokens,
   register,
   login,
   getProfile,

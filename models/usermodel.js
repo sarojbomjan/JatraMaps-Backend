@@ -2,17 +2,29 @@ const mongoose = require("mongoose");
 
 const userSchema = mongoose.Schema(
   {
-    username: String,
-    email: { type: String, unique: true },
-    password: String,
-    isBanned: { type: Boolean, default: false },
+    username: { type: String, required: true },
+    email: {
+      type: String,
+      unique: true,
+      required: true,
+      validate: {
+        validator: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+        message: (props) => `${props.value} is not a valid email!`,
+      },
+    },
+    password: { type: String, required: true, select: false },
+    isVerified: { type: Boolean, default: false },
+    verificationCode: String,
+    verificationCodeExpires: Date,
     role: {
       type: String,
       enum: ["customer", "admin", "moderator"],
       default: "customer",
     },
+    isBanned: { type: Boolean, default: false },
   },
   {
+    timestamps: true,
     versionKey: false,
   }
 );
