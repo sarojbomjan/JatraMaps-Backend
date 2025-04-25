@@ -24,7 +24,6 @@ userRouter.post("/register", register);
 userRouter.post("/login", login);
 userRouter.post("/verify", verifyCode);
 userRouter.post("/resend-verification", resendVerification);
-// userRouter.get("/verify-email/:token", verifyEmail);
 
 userRouter.get("/profile", authMiddleware, getProfile);
 userRouter.put("/profile", authMiddleware, updateProfile);

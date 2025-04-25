@@ -1,6 +1,5 @@
 const Event = require("../models/eventmodel");
 const fs = require("fs");
-const path = require("path");
 const mongoose = require("mongoose");
 
 // Create event
