@@ -16,6 +16,8 @@ exports.verifyEmailWithService = async (email) => {
       `https://api.zerobounce.net/v2/validate?api_key=${process.env.ZEROBOUNCE_API_KEY}&email=${email}`
     );
 
+    console.log("ZeroBounce Response:", response.data);
+    //return ["valid", "catch-all", "unknown"].includes(response.data.status);
     return response.data.status === "valid";
   } catch (error) {
     console.error(

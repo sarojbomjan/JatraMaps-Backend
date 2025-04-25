@@ -37,74 +37,76 @@ const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    if (!username || !email || !password) {
+    // Validation
+    if (!username?.trim() || !email?.trim() || !password) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
       });
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+    if (!emailRegex.test(normalizedEmail)) {
       return res.status(400).json({
         success: false,
-        message: "Please provide a valid email address",
+        message: "Invalid email format",
       });
     }
 
-    // Check if email already exists
-    const existingUser = await UserModel.findOne({ email });
+    // Check existing user
+    const existingUser = await UserModel.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message: "Email already in use",
+        message: "Email already registered",
       });
     }
 
-    // Verify email
-    const isEmailValid = await verifyEmailWithService(email);
+    // Email verification service
+    const isEmailValid = await verifyEmailWithService(normalizedEmail);
     if (!isEmailValid) {
       return res.status(400).json({
         success: false,
-        message: "Please use a valid email address",
+        message:
+          "We couldn't verify this email. Please use a different address.",
       });
     }
 
-    // Generate verification code
+    // Generate and send code
     const verificationCode = Math.floor(
       100000 + Math.random() * 900000
     ).toString();
 
     try {
-      await sendVerificationEmail(email, verificationCode);
+      await sendVerificationEmail(normalizedEmail, verificationCode);
     } catch (emailError) {
-      console.error("Failed to send verification email:", emailError);
+      console.error("Email sending failed:", emailError);
       return res.status(500).json({
         success: false,
-        message: "Failed to send verification email",
+        message: "Verification email could not be sent",
       });
     }
 
-    // create the user
+    // Create user
     const user = await UserModel.create({
-      username,
-      email,
+      username: username.trim(),
+      email: normalizedEmail,
       password: await bcrypt.hash(password, 12),
       verificationCode,
       verificationCodeExpires: Date.now() + 30 * 60 * 1000, // 30 mins
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
-      message:
-        "Registration successful. Please check your email for verification code.",
+      message: "Registration successful. Check your email for verification.",
     });
   } catch (error) {
     console.error("Registration error:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Registration failed",
-      error: error.message,
+      message: "Registration failed. Please try again.",
     });
   }
 };
