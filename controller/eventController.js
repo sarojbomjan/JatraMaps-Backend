@@ -1,6 +1,8 @@
 const Event = require("../models/eventmodel");
 const fs = require("fs");
 const mongoose = require("mongoose");
+const path = require("path");
+const uploadDirectory = path.join(__dirname, "../assets/events");
 
 // Create event
 const createEvent = async (req, res) => {
@@ -109,7 +111,6 @@ const getEventById = async (req, res) => {
   }
 };
 
-// Update event
 const updateEvent = async (req, res) => {
   try {
     const {
@@ -123,22 +124,29 @@ const updateEvent = async (req, res) => {
       price,
       status,
     } = req.body;
-    const event = await Event.findById(req.params.id);
 
+    const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({ error: "Event not found" });
     }
 
-    // If new image is uploaded, delete old one
+    // If a new image is uploaded, delete the old one
     if (req.file) {
-      if (event.image) {
+      if (event.image && event.image.path) {
+        const oldImagePath = path.join(uploadDirectory, event.image.path);
+        console.log("Deleting old image:", oldImagePath);
         try {
-          fs.unlinkSync(event.image);
+          fs.unlinkSync(oldImagePath); // Delete old image file from server
         } catch (err) {
           console.error("Error deleting old image:", err);
         }
       }
-      event.image = req.file.path;
+
+      const newImagePath = path.join("assets/events", req.file.filename);
+      event.image = {
+        path: newImagePath,
+        url: `http://localhost:5000/${newImagePath}`,
+      };
     }
 
     event.title = title || event.title;
@@ -151,6 +159,7 @@ const updateEvent = async (req, res) => {
     event.price = price || event.price;
     event.status = status || event.status;
 
+    // Save updated event
     const updatedEvent = await event.save();
     res.status(200).json(updatedEvent);
   } catch (error) {
