@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const { userRouter } = require("./routes/userRoutes");
 const { eventRouter } = require("./routes/eventsRoutes");
 const { commentRouter } = require("./routes/commentRoutes");
+const adminRoutes = require("./routes/adminRouter");
 
 dotenv.config();
 const path = require("path");
@@ -18,6 +19,7 @@ app.use("/", userRouter);
 app.use("/events", eventRouter);
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.use("/comments", commentRouter);
+app.use("/admin", adminRoutes);
 
 // Test route
 app.get("/api/test", (req, res) => {

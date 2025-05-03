@@ -15,7 +15,6 @@ const createEvent = async (req, res) => {
       location,
       category,
       organizer,
-      price,
       status,
     } = req.body;
 
@@ -38,7 +37,6 @@ const createEvent = async (req, res) => {
       category,
       image: imageData,
       organizer,
-      price,
       status,
       attendees: 0,
       createdAt: new Date(),
@@ -121,7 +119,6 @@ const updateEvent = async (req, res) => {
       location,
       category,
       organizer,
-      price,
       status,
     } = req.body;
 
@@ -156,7 +153,6 @@ const updateEvent = async (req, res) => {
     event.location = location || event.location;
     event.category = category || event.category;
     event.organizer = organizer || event.organizer;
-    event.price = price || event.price;
     event.status = status || event.status;
 
     // Save updated event

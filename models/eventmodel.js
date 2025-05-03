@@ -39,7 +39,6 @@ const eventSchema = new mongoose.Schema(
       url: { type: String },
     },
     organizer: { type: String, required: true },
-    price: { type: String, default: "Free" },
     status: { type: String, default: "draft" },
     attendees: { type: Number, default: 0 },
     comments: [commentSchema],
