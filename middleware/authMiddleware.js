@@ -18,12 +18,20 @@ const verifyToken = async (req, res, next) => {
       process.env.JWT_SECRET_KEY || "fallbacksecret"
     );
 
-    // Check if user exists and isn't banned
+    // Check if user exists
     const user = await UserModel.findById(decoded.userId);
-    if (!user || user.isBanned) {
+    if (!user) {
       return res.status(401).json({
         success: false,
-        message: user ? "Account suspended" : "User not found",
+        message: "User not found",
+      });
+    }
+
+    // Allow access to /profile even if banned
+    if (user.isBanned && req.originalUrl !== "/profile") {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been banned from commenting",
       });
     }
 

@@ -130,13 +130,13 @@ const login = async (req, res) => {
       });
     }
 
-    // Check if banned
-    if (user.isBanned) {
-      return res.status(403).json({
-        success: false,
-        message: "This account has been banned",
-      });
-    }
+    // // Check if banned
+    // if (user.isBanned) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "This account has been banned",
+    //   });
+    // }
 
     // Check password
     if (!(await bcrypt.compare(password, user.password))) {
