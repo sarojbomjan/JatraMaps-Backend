@@ -12,7 +12,6 @@ const ACCESS_TOKEN_EXPIRY = "24h";
 const REFRESH_TOKEN_EXPIRY = "7d";
 const JWT_SECRET = process.env.JWT_SECRET_KEY || "fallbacksecret";
 
-// Helper function to generate tokens
 const generateTokens = (user) => {
   const accessToken = jwt.sign(
     {
@@ -32,7 +31,7 @@ const generateTokens = (user) => {
   return { accessToken, refreshToken };
 };
 
-// POST /register
+// register user
 const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -95,7 +94,7 @@ const register = async (req, res) => {
       email: normalizedEmail,
       password: await bcrypt.hash(password, 12),
       verificationCode,
-      verificationCodeExpires: Date.now() + 30 * 60 * 1000, // 30 mins
+      verificationCodeExpires: Date.now() + 30 * 60 * 1000,
     });
 
     return res.status(201).json({
@@ -111,6 +110,7 @@ const register = async (req, res) => {
   }
 };
 
+// login
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -130,13 +130,13 @@ const login = async (req, res) => {
       });
     }
 
-    // // Check if banned
-    // if (user.isBanned) {
-    //   return res.status(403).json({
-    //     success: false,
-    //     message: "This account has been banned",
-    //   });
-    // }
+    // Check if banned
+    if (user.isBanned) {
+      return res.status(403).json({
+        success: false,
+        message: "This account has been banned",
+      });
+    }
 
     // Check password
     if (!(await bcrypt.compare(password, user.password))) {
@@ -154,7 +154,6 @@ const login = async (req, res) => {
       });
     }
 
-    // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user);
 
     // Return responsee
@@ -182,24 +181,6 @@ const login = async (req, res) => {
   }
 };
 
-const getProfile = async (req, res) => {
-  res.json(req.user);
-};
-
-const updateProfile = async (req, res) => {
-  try {
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      req.user._id,
-      req.body,
-      { new: true }
-    ).select("-password");
-
-    res.json(updatedUser);
-  } catch (error) {
-    res.status(500).json({ message: "Error updating profile", error });
-  }
-};
-
 // get all users
 const getAllUsers = async (req, res) => {
   try {
@@ -223,55 +204,9 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// Ban user
-const banUser = async (req, res) => {
-  try {
-    await User.findByIdAndUpdate(req.params.userId, { isBanned: true });
-    res.json({ message: `User ${req.params.userId} has been banned` });
-  } catch (error) {
-    res.status(500).json({ message: "Error banning user" });
-  }
-};
-
-//UnBan user
-const unbanUser = async (req, res) => {
-  try {
-    await User.findByIdAndUpdate(req.params.userId, { isBanned: false });
-    res.json({ message: `User ${req.params.userId} has been unbanned` });
-  } catch (error) {
-    res.status(500).json({ message: "Error unbanning user" });
-  }
-};
-
-// change password
-const changePassword = async (req, res) => {
-  const { currentPassword, newPassword } = req.body;
-
-  try {
-    const user = await UserModel.findById(req.user.id);
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Current password is incorrect" });
-
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
-    await user.save();
-
-    res.json({ message: "Password changed successfully" });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
-  }
-};
-
 module.exports = {
   generateTokens,
   register,
   login,
-  getProfile,
-  updateProfile,
   getAllUsers,
-  banUser,
-  unbanUser,
-  changePassword,
 };

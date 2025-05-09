@@ -1,4 +1,3 @@
-// profileController.js
 const { UserModel } = require("../models/usermodel");
 const bcrypt = require("bcryptjs");
 
@@ -62,7 +61,6 @@ const updateProfile = async (req, res) => {
     });
   }
 };
-
 const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -100,8 +98,35 @@ const changePassword = async (req, res) => {
   }
 };
 
+const deleteAccount = async (req, res) => {
+  try {
+    const { password } = req.body;
+    const user = await UserModel.findById(req.user._id).select("+password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.password) {
+      return res.status(400).json({ message: "User password not set" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    // Delete user
+    await UserModel.findByIdAndDelete(req.user.id);
+    res.status(200).json({ message: "Account deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
   changePassword,
+  deleteAccount,
 };

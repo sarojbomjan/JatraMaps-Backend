@@ -1,22 +1,17 @@
 const express = require("express");
 const userRouter = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
-const {
-  verifyCode,
-  resendVerification,
-  verifyEmail,
-} = require("../services/verifyCode");
+const { verifyCode, resendVerification } = require("../services/verifyCode");
 const {
   register,
   login,
   getAllUsers,
-  banUser,
-  unbanUser,
 } = require("../controller/userController");
 const {
   getProfile,
   updateProfile,
   changePassword,
+  deleteAccount,
 } = require("../controller/profileController");
 
 // Routes
@@ -28,9 +23,8 @@ userRouter.post("/resend-verification", resendVerification);
 userRouter.get("/profile", authMiddleware, getProfile);
 userRouter.put("/profile", authMiddleware, updateProfile);
 userRouter.get("/users", getAllUsers);
-userRouter.get("/banUser", banUser);
-userRouter.get("/unbanUser", unbanUser);
 userRouter.put("/changePassword", authMiddleware, changePassword);
+userRouter.delete("/deleteAccount", authMiddleware, deleteAccount);
 
 module.exports = {
   userRouter,

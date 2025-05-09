@@ -17,7 +17,7 @@ const commentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["Pending", "Approved", "Deleted", "Banned"],
+    enum: ["Pending", "Approved", "Deleted"],
     default: "Pending",
   },
   createdAt: {

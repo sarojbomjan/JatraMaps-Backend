@@ -16,7 +16,6 @@ const {
   approveEvent,
 } = require("../controller/eventController");
 
-// Multer configuration
 const assetsDir = path.join(__dirname, "../assets/events");
 if (!fs.existsSync(assetsDir)) {
   fs.mkdirSync(assetsDir, { recursive: true });

@@ -127,13 +127,12 @@ const updateEvent = async (req, res) => {
       return res.status(404).json({ error: "Event not found" });
     }
 
-    // If a new image is uploaded, delete the old one
     if (req.file) {
       if (event.image && event.image.path) {
         const oldImagePath = path.join(uploadDirectory, event.image.path);
         console.log("Deleting old image:", oldImagePath);
         try {
-          fs.unlinkSync(oldImagePath); // Delete old image file from server
+          fs.unlinkSync(oldImagePath);
         } catch (err) {
           console.error("Error deleting old image:", err);
         }

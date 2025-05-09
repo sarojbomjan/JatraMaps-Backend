@@ -22,7 +22,13 @@ const userSchema = mongoose.Schema(
       default: "customer",
     },
     isBanned: { type: Boolean, default: false },
+    commentStatus: {
+      type: String,
+      enum: ["Allowed", "Banned"],
+      default: "Allowed",
+    },
   },
+
   {
     timestamps: true,
     versionKey: false,

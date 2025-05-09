@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const Event = require("../models/eventmodel");
-const {UserModel} = require("../models/usermodel");
+const { UserModel } = require("../models/usermodel");
 
 exports.addComment = async (req, res) => {
   try {
@@ -9,23 +9,33 @@ exports.addComment = async (req, res) => {
     const userId = req.user._id;
 
     const user = await UserModel.findById(userId);
-    if (user.isBanned) {
-      return res.status(403).json({ message: "You are banned from commenting." });
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
     }
 
+    //  Check if the user is banned from commenting
+    if (user.commentStatus === "Banned") {
+      return res
+        .status(403)
+        .json({ message: "You are banned from commenting." });
+    }
+
+    // Validate event ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid event ID" });
     }
 
+    // Add the new comment to the event
     const event = await Event.findByIdAndUpdate(
       id,
       { $push: { comments: { user: userId, text } } },
       { new: true }
     ).populate("comments.user", "name avatar");
 
-    if (!event) return res.status(404).json({ message: "Event not found" });
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
 
-    // Return just the newly added comment
     const newComment = event.comments[event.comments.length - 1];
     return res.status(201).json(newComment);
   } catch (error) {

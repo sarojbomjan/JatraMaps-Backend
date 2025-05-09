@@ -122,20 +122,17 @@ exports.banUser = async (req, res) => {
     const user = await UserModel.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    user.isBanned = true;
+    user.commentStatus = "Banned";
     await user.save();
 
-    await Event.updateMany(
-      { "comments.user": userId },
-      { $set: { "comments.$[elem].status": "Banned" } },
-      { arrayFilters: [{ "elem.user": userId }] }
-    );
-
-    res.status(200).json({ message: "User banned and comments updated" });
-  } catch (error) {
     res
-      .status(500)
-      .json({ message: "Failed to ban user", error: error.message });
+      .status(200)
+      .json({ message: "User is now banned from commenting globally." });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to ban user from commenting",
+      error: error.message,
+    });
   }
 };
 
@@ -146,25 +143,14 @@ exports.unbanUser = async (req, res) => {
     const user = await UserModel.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    user.isBanned = !user.isBanned;
+    user.commentStatus = "Allowed";
     await user.save();
 
-    const newStatus = user.isBanned ? "Banned" : "Pending";
-
-    await Event.updateMany(
-      { "comments.user": userId },
-      { $set: { "comments.$[elem].status": newStatus } },
-      { arrayFilters: [{ "elem.user": userId }] }
-    );
-
-    res.status(200).json({
-      message: user.isBanned
-        ? "User banned and comments updated"
-        : "User unbanned and comments updated",
-    });
+    res.status(200).json({ message: "User is now allowed to comment again." });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to toggle ban", error: error.message });
+    res.status(500).json({
+      message: "Failed to unban user from commenting",
+      error: error.message,
+    });
   }
 };
