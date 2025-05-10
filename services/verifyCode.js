@@ -1,24 +1,24 @@
 const { generateTokens } = require("../controller/userController");
 const { UserModel } = require("../models/usermodel");
+const { sendVerificationEmail } = require("./emailService");
 
 const verifyCode = async (req, res) => {
   try {
     const { email, code } = req.body;
 
-    // Find user with matching unexpired code
     const user = await UserModel.findOneAndUpdate(
       {
         email,
         verificationCode: code,
         verificationCodeExpires: { $gt: Date.now() },
-        isVerified: false, // Only verify unverified users
+        isVerified: false,
       },
       {
         $set: { isVerified: true },
         $unset: {
           verificationCode: 1,
           verificationCodeExpires: 1,
-          verificationToken: 1, // Clean up if exists
+          verificationToken: 1,
         },
       },
       { new: true }

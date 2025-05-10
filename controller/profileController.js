@@ -3,7 +3,6 @@ const bcrypt = require("bcryptjs");
 
 const getProfile = async (req, res) => {
   try {
-    // Exclude sensitive fields
     const user = await UserModel.findById(req.user._id).select(
       "-password -verificationCode -verificationCodeExpires -__v"
     );

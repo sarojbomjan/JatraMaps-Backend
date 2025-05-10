@@ -2,7 +2,7 @@ const Event = require("../models/eventmodel");
 const { UserModel } = require("../models/usermodel");
 const { default: mongoose } = require("mongoose");
 
-// GET /comments/moderation
+// get all comments
 exports.getAllCommentsForModeration = async (req, res) => {
   try {
     const events = await Event.find()
@@ -45,7 +45,6 @@ exports.updateCommentStatus = async (req, res) => {
       return res.status(404).json({ message: "Comment not found" });
     }
 
-    // Find the specific comment inside the comments array
     const comment = event.comments.id(id);
     if (!comment) {
       return res.status(404).json({ message: "Comment not found in event" });

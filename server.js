@@ -14,7 +14,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// mount user routes
 app.use("/", userRouter);
 app.use("/events", eventRouter);
 app.use("/assets", express.static(path.join(__dirname, "assets")));

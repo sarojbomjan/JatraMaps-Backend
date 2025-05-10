@@ -13,19 +13,17 @@ exports.addComment = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    //  Check if the user is banned from commenting
+    //  Checks if the user is banned from commenting
     if (user.commentStatus === "Banned") {
       return res
         .status(403)
         .json({ message: "You are banned from commenting." });
     }
 
-    // Validate event ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid event ID" });
     }
 
-    // Add the new comment to the event
     const event = await Event.findByIdAndUpdate(
       id,
       { $push: { comments: { user: userId, text } } },
